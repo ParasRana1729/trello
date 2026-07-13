@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban — Task Board</title>
+    <meta name="description" content="A clean, minimal kanban board for managing tasks across organizations and teams.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ===== AUTH ===== -->
+    <section id="auth-screen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <svg class="auth-logo" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="10" height="24" rx="2" fill="currentColor"/><rect x="16" y="2" width="10" height="14" rx="2" fill="currentColor" opacity=".5"/></svg>
+                <span>Kanban</span>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <h1>Sign in</h1>
+                <p class="auth-sub">Enter your credentials to continue.</p>
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="username" required autocomplete="username">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                <button type="submit" class="btn btn-primary btn-full">Sign in</button>
+                <p class="auth-switch">No account? <a href="#" id="show-signup">Create one</a></p>
+            </form>
+
+            <form id="signup-form" class="auth-form hidden">
+                <h1>Create account</h1>
+                <p class="auth-sub">Get started with a free account.</p>
+                <label for="signup-username">Username</label>
+                <input type="text" id="signup-username" placeholder="username" required autocomplete="username">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" placeholder="••••••••" required autocomplete="new-password">
+                <button type="submit" class="btn btn-primary btn-full">Create account</button>
+                <p class="auth-switch">Have an account? <a href="#" id="show-login">Sign in</a></p>
+            </form>
+        </div>
+    </section>
+
+    <!-- ===== APP ===== -->
+    <section id="app-screen" class="app-screen hidden">
+
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-brand">
+                    <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="10" height="24" rx="2" fill="currentColor"/><rect x="16" y="2" width="10" height="14" rx="2" fill="currentColor" opacity=".5"/></svg>
+                    <span>Kanban</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-group-header">
+                        <span>Organizations</span>
+                        <button id="btn-open-create-org" class="nav-action" title="New organization">+</button>
+                    </div>
+                    <div id="org-list" class="nav-list"></div>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-header">
+                        <span>Boards</span>
+                        <button id="btn-open-create-board" class="nav-action hidden" title="New board">+</button>
+                    </div>
+                    <div id="board-list" class="nav-list">
+                        <span class="nav-empty">Pick an organization first</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-user">
+                    <span class="user-avatar" id="user-avatar">U</span>
+                    <span class="user-name" id="user-display-name">User</span>
+                </div>
+                <button id="btn-logout" class="nav-action" title="Log out">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <span class="topbar-org" id="current-org-name">—</span>
+                    <span class="topbar-sep">/</span>
+                    <span class="topbar-board" id="current-board-name">No board</span>
+                </div>
+                <div class="topbar-right">
+                    <div id="org-members-section" class="topbar-members hidden">
+                        <div class="avatar-stack" id="org-members-avatars"></div>
+                        <button id="btn-open-add-member" class="btn btn-ghost btn-sm">Invite</button>
+                        <button id="btn-delete-org" class="btn btn-ghost-danger btn-sm">Delete org</button>
+                    </div>
+                    <div id="board-options-section" class="hidden">
+                        <button id="btn-delete-board" class="btn btn-ghost-danger btn-sm">Delete board</button>
+                    </div>
+                </div>
+            </header>
+
+            <div id="board-workspace" class="workspace">
+                <div class="empty-state" id="empty-workspace-message">
+                    <svg width="48" height="48" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="10" height="24" rx="2" fill="currentColor" opacity=".15"/><rect x="16" y="2" width="10" height="14" rx="2" fill="currentColor" opacity=".08"/></svg>
+                    <h2>No board selected</h2>
+                    <p>Create or select an organization and board from the sidebar to get started.</p>
+                </div>
+
+                <div id="kanban-lanes" class="lanes hidden">
+                    <div class="lane" data-status="todo">
+                        <div class="lane-head">
+                            <span class="lane-dot dot-todo"></span>
+                            <span class="lane-title">To do</span>
+                            <span class="lane-count" id="count-todo">0</span>
+                        </div>
+                        <div class="lane-cards" id="cards-todo" data-status="todo"></div>
+                        <button class="btn-new-card" data-status="todo">+ New card</button>
+                    </div>
+                    <div class="lane" data-status="in_progress">
+                        <div class="lane-head">
+                            <span class="lane-dot dot-progress"></span>
+                            <span class="lane-title">In progress</span>
+                            <span class="lane-count" id="count-in_progress">0</span>
+                        </div>
+                        <div class="lane-cards" id="cards-in_progress" data-status="in_progress"></div>
+                        <button class="btn-new-card" data-status="in_progress">+ New card</button>
+                    </div>
+                    <div class="lane" data-status="done">
+                        <div class="lane-head">
+                            <span class="lane-dot dot-done"></span>
+                            <span class="lane-title">Done</span>
+                            <span class="lane-count" id="count-done">0</span>
+                        </div>
+                        <div class="lane-cards" id="cards-done" data-status="done"></div>
+                        <button class="btn-new-card" data-status="done">+ New card</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <!-- ===== MODALS ===== -->
+
+    <div id="modal-create-org" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-head"><h2>New organization</h2><button class="btn-close-modal">&times;</button></div>
+            <form id="form-create-org">
+                <label for="org-title-input">Name</label>
+                <input type="text" id="org-title-input" placeholder="e.g. Engineering" required>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost btn-close-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-create-board" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-head"><h2>New board</h2><button class="btn-close-modal">&times;</button></div>
+            <form id="form-create-board">
+                <label for="board-title-input">Name</label>
+                <input type="text" id="board-title-input" placeholder="e.g. Sprint 12" required>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost btn-close-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-add-member" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-head"><h2>Manage members</h2><button class="btn-close-modal">&times;</button></div>
+            <form id="form-add-member">
+                <label for="member-select">Add a user</label>
+                <select id="member-select" required>
+                    <option value="" disabled selected>Select user…</option>
+                </select>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost btn-close-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+            <hr class="modal-divider">
+            <h3 class="modal-section-label">Current members</h3>
+            <ul class="member-list" id="modal-current-members-list"></ul>
+        </div>
+    </div>
+
+    <div id="modal-issue" class="modal-backdrop">
+        <div class="modal modal-wide">
+            <div class="modal-head">
+                <span class="modal-tag" id="modal-issue-badge">New</span>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+            <form id="form-issue">
+                <input type="hidden" id="modal-issue-id">
+                <input type="hidden" id="modal-issue-status">
+                <input type="text" id="issue-title-input" class="input-title" placeholder="Card title" required>
+                <label for="issue-description-input">Description</label>
+                <textarea id="issue-description-input" rows="4" placeholder="Add details…"></textarea>
+                <label for="issue-status-select">Status</label>
+                <select id="issue-status-select" required>
+                    <option value="todo">To do</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="done">Done</option>
+                </select>
+                <div class="modal-actions modal-actions-split">
+                    <button type="button" id="btn-delete-issue" class="btn btn-ghost-danger hidden">Delete</button>
+                    <div class="modal-actions-right">
+                        <button type="button" class="btn btn-ghost btn-close-modal-btn">Cancel</button>
+                        <button type="submit" id="btn-save-issue" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

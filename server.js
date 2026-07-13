@@ -4,6 +4,7 @@ const { authMiddleware } = require("./authMiddleware");
 
 const app = express();
 app.use(express.json());
+app.use(express.static("frontend"));
 
 let userId = 1,
     orgId = 1,
@@ -71,6 +72,16 @@ app.get("/orgs", authMiddleware, (req, res) => {
 
     res.json({
         orgs,
+    });
+});
+
+app.get("/users", authMiddleware, (req, res) => {
+    const users = USERS.map((u) => ({
+        userId: u.userId,
+        username: u.username,
+    }));
+    res.json({
+        users,
     });
 });
 
@@ -287,6 +298,54 @@ app.put("/members", authMiddleware, (req, res) => {
     });
 });
 
+app.put("/issue", authMiddleware, (req, res) => {
+    const currentUserId = parseInt(req.userId);
+    const issueId = parseInt(req.body.issueId);
+    const status = req.body.status;
+    const title = req.body.title;
+    const description = req.body.description;
+
+    const issue = ISSUES.find((i) => i.issueId === issueId);
+    if (!issue) {
+        return res.status(404).json({
+            message: "issue not found",
+        });
+    }
+
+    const board = BOARDS.find((b) => b.boardId === issue.boardId);
+    if (!board) {
+        return res.status(404).json({
+            message: "board not found",
+        });
+    }
+
+    const org = ORGS.find((o) => o.orgId === board.orgId);
+    const isMember = org.admin === currentUserId || org.members.find((m) => m.userId === currentUserId);
+
+    if (!isMember) {
+        return res.status(403).json({
+            message: "you are not a member of this org",
+        });
+    }
+
+    if (status !== undefined) issue.status = status;
+    if (title !== undefined) issue.title = title;
+    if (description !== undefined) issue.description = description;
+
+    // Update board.issues
+    const boardIssue = board.issues.find((i) => i.issueId === issueId);
+    if (boardIssue) {
+        if (status !== undefined) boardIssue.status = status;
+        if (title !== undefined) boardIssue.title = title;
+        if (description !== undefined) boardIssue.description = description;
+    }
+
+    res.json({
+        message: "issue updated",
+        issue,
+    });
+});
+
 // delete endpoints
 app.delete("/org", authMiddleware, (req, res) => {
     const currentUserId = parseInt(req.userId);
@@ -332,6 +391,48 @@ app.delete("/board", authMiddleware, (req, res) => {
 
     res.json({
         message: "board deleted",
+    });
+});
+
+app.delete("/issue", authMiddleware, (req, res) => {
+    const currentUserId = parseInt(req.userId);
+    const issueId = parseInt(req.body.issueId);
+
+    const issueIndex = ISSUES.findIndex((i) => i.issueId === issueId);
+    if (issueIndex === -1) {
+        return res.status(404).json({
+            message: "issue not found",
+        });
+    }
+
+    const issue = ISSUES[issueIndex];
+    const board = BOARDS.find((b) => b.boardId === issue.boardId);
+    if (!board) {
+        return res.status(404).json({
+            message: "board not found",
+        });
+    }
+
+    const org = ORGS.find((o) => o.orgId === board.orgId);
+    const isMember = org.admin === currentUserId || org.members.find((m) => m.userId === currentUserId);
+
+    if (!isMember) {
+        return res.status(403).json({
+            message: "you are not a member of this org",
+        });
+    }
+
+    // Remove from ISSUES
+    ISSUES.splice(issueIndex, 1);
+
+    // Remove from board.issues
+    const boardIssueIndex = board.issues.findIndex((i) => i.issueId === issueId);
+    if (boardIssueIndex !== -1) {
+        board.issues.splice(boardIssueIndex, 1);
+    }
+
+    res.json({
+        message: "issue deleted",
     });
 });
 
