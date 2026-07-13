@@ -16,6 +16,17 @@ const ORGS = []; // id title admin members
 const BOARDS = []; // id title orgId issues
 const ISSUES = []; // id title description boardId status
 
+function resetState() {
+    userId = 1;
+    orgId = 1;
+    boardId = 1;
+    issueId = 1;
+    USERS.length = 0;
+    ORGS.length = 0;
+    BOARDS.length = 0;
+    ISSUES.length = 0;
+}
+
 // get endpoints
 app.get("/", (req, res) => {
     res.json({
@@ -436,7 +447,11 @@ app.delete("/issue", authMiddleware, (req, res) => {
     });
 });
 
-app.listen(
-    3000,
-    console.log("the server has been started at http://localhost:3000"),
-);
+if (require.main === module) {
+    app.listen(
+        3000,
+        console.log("the server has been started at http://localhost:3000"),
+    );
+}
+
+module.exports = { app, USERS, ORGS, BOARDS, ISSUES, resetState };
